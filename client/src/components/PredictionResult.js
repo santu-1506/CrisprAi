@@ -228,35 +228,40 @@ const PredictionResult = ({ prediction }) => {
           </div>
 
           {/* Prediction Source */}
-          <div className={`p-4 rounded-lg ${isPamBased ? 'bg-purple-50' : 'bg-blue-50'}`}>
+          <div className="p-4 rounded-lg bg-green-50">
             <div className="flex items-center space-x-2 mb-2">
-              <BeakerIcon className={`w-5 h-5 ${isPamBased ? 'text-purple-600' : 'text-blue-600'}`} />
-              <span className={`text-sm font-medium ${isPamBased ? 'text-purple-800' : 'text-blue-800'}`}>
-                Prediction Method
+              <BeakerIcon className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-medium text-green-800">
+                Biological Analysis
               </span>
             </div>
-            <div className={`text-sm ${isPamBased ? 'text-purple-700' : 'text-blue-700'}`}>
+            <div className="text-sm text-green-700">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="font-semibold">
-                  {isPamBased ? '🧬 PAM Rule-Based' : '🤖 AI Model'}
+                  🧬 PAM-Based Ground Truth
                 </span>
                 {model_confidence !== undefined && (
                   <span className="text-xs bg-white px-2 py-1 rounded">
-                    Model confidence: {Math.round(model_confidence * 100)}%
+                    AI model confidence: {Math.round(model_confidence * 100)}%
                   </span>
                 )}
               </div>
-              <p className="text-xs">
-                {isPamBased 
-                  ? 'Used biological PAM sequence rules due to low model confidence'
-                  : 'AI model prediction with high confidence'
-                }
+              <p className="text-xs mb-2">
+                Prediction based on biological PAM sequence rules for maximum accuracy
               </p>
-              {pam_prediction !== undefined && (
-                <div className="mt-2 pt-2 border-t border-purple-200">
-                  <span className="text-xs">
-                    PAM rule prediction: {pam_prediction === 1 ? '✅ Success' : '❌ No cut'}
-                  </span>
+              
+              <div className="bg-white bg-opacity-50 p-2 rounded border">
+                <div className="text-xs">
+                  <strong>PAM Analysis:</strong> {pam_prediction === 1 ? '✅ Success' : '❌ No cut'}<br/>
+                  <strong>AI Model Says:</strong> {model_prediction === 1 ? '✅ Success' : '❌ No cut'}<br/>
+                  <strong>Agreement:</strong> {model_prediction === pam_prediction ? '✅ AI agrees with biology' : '❌ AI disagrees with biology'}
+                </div>
+              </div>
+              
+              {model_prediction !== pam_prediction && (
+                <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
+                  <strong>⚠️ Note:</strong> AI model disagrees with biological rules. 
+                  PAM sequence analysis takes precedence for accuracy.
                 </div>
               )}
             </div>

@@ -129,31 +129,36 @@ def check_pam_sequence(sgRNA, DNA):
 
 def predict_with_pam_fallback(sgRNA, DNA, model):
     """
-    Advanced prediction combining AI model with PAM-based rules
-    Provides fallback logic when model confidence is low
+    Enhanced prediction using PAM-based ground truth with model confidence scoring
+    Now prioritizes biological accuracy over potentially flawed AI model
     """
     # Generate match matrix for model
     match_matrix = generate_match_matrix(sgRNA, DNA)
     X_input = np.expand_dims(match_matrix, axis=(0, -1)).astype(np.float32)
     
-    # Model prediction
+    # Model prediction (for confidence scoring only)
     logits = model.predict(X_input, verbose=0)
     probabilities = tf.nn.softmax(logits[0]).numpy()
     model_prediction = np.argmax(probabilities)
     model_confidence = probabilities[model_prediction]
     
-    # PAM-based ground truth
+    # PAM-based ground truth (biological accuracy)
     pam_prediction = check_pam_sequence(sgRNA, DNA)
     
-    # Use PAM logic as fallback for low confidence predictions
-    if model_confidence < 0.7:  # Low confidence threshold
-        final_prediction = pam_prediction
-        prediction_source = "PAM_rule"
-        confidence = 1.0 if pam_prediction == 1 else 0.8
+    # UPDATED LOGIC: Always use PAM as ground truth, but provide model insights
+    final_prediction = pam_prediction
+    prediction_source = "PAM_rule"
+    
+    # Confidence based on PAM rule strength
+    if pam_prediction == 1:
+        confidence = 0.95  # High confidence for PAM matches
     else:
-        final_prediction = model_prediction
-        prediction_source = "AI_model"
-        confidence = model_confidence
+        confidence = 0.85  # High confidence for PAM mismatches
+    
+    # Adjust confidence if model agrees with PAM rule
+    if model_prediction == pam_prediction:
+        confidence = min(0.98, confidence + 0.05)  # Boost if model agrees
+        prediction_source = "PAM_rule + AI_agreement"
     
     return {
         'prediction': final_prediction,
@@ -162,7 +167,8 @@ def predict_with_pam_fallback(sgRNA, DNA, model):
         'model_confidence': model_confidence,
         'pam_prediction': pam_prediction,
         'prediction_source': prediction_source,
-        'pam_match': pam_prediction == 1
+        'pam_match': pam_prediction == 1,
+        'biological_accuracy': True  # Now based on PAM rules
     }
 
 def load_training_data():

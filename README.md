@@ -242,7 +242,7 @@ PORT=5000
 FRONTEND_URL=http://localhost:3000
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/crispr_prediction
+MONGODB_URI=
 
 # Model API
 MODEL_API_URL=http://localhost:5001

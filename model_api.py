@@ -233,8 +233,20 @@ def train_model():
             epochs=30,
             validation_split=0.2,
             callbacks=[
-                keras.callbacks.EarlyStopping(patience=8, restore_best_weights=True),
-                keras.callbacks.ReduceLROnPlateau(factor=0.5, patience=4)
+                keras.callbacks.EarlyStopping(
+                    monitor='val_loss',
+                    patience=5,
+                    min_delta=1e-4,
+                    restore_best_weights=True,
+                    verbose=1
+                ),
+                keras.callbacks.ReduceLROnPlateau(
+                    monitor='val_loss',
+                    factor=0.5,
+                    patience=3,
+                    min_delta=1e-4,
+                    verbose=1
+                )
             ],
             verbose=1
         )
@@ -254,8 +266,9 @@ def save_model():
         return False
     
     try:
-        model.save_weights('crispr_model_weights.h5')
-        logger.info("Model weights saved successfully")
+        # Save the entire model (architecture + weights + optimizer state)
+        model.save('crispr_model.h5', save_format='h5')
+        logger.info("Complete model saved successfully to crispr_model.h5")
         return True
     except Exception as e:
         logger.error(f"Failed to save model: {str(e)}")
@@ -266,21 +279,25 @@ def load_model():
     global model
     
     try:
-        model = ViTClassifier()
-        dummy_input = tf.zeros((1, 23, 23, 1))
-        _ = model(dummy_input)  # Initialize model
-        
-        if os.path.exists('crispr_model_weights.h5'):
-            model.load_weights('crispr_model_weights.h5')
-            logger.info("Pre-trained model weights loaded successfully")
+        if os.path.exists('crispr_model.h5'):
+            # Load the entire model
+            model = tf.keras.models.load_model('crispr_model.h5', custom_objects={
+                'ViTClassifier': ViTClassifier,
+                'PatchEmbedding': PatchEmbedding
+            })
+            logger.info("Pre-trained model loaded successfully from crispr_model.h5")
+            return True
         else:
-            logger.info("No pre-trained weights found, will train new model")
+            logger.info("No pre-trained model found at crispr_model.h5, will train new model")
             return False
         
-        return True
     except Exception as e:
         logger.error(f"Failed to load model: {str(e)}")
         return False
+
+def model_exists():
+    """Check if a saved model exists"""
+    return os.path.exists('crispr_model.h5')
 
 @app.route('/health', methods=['GET'])
 def health_check():
